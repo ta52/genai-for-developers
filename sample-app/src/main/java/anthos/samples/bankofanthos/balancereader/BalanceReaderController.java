@@ -163,10 +163,12 @@ public final class BalanceReaderController {
                     HttpStatus.UNAUTHORIZED);
             }
             // Load from cache
-            Long balance = cache.get(accountId);
+            String balance = cache.get(accountId);
+			int newBlance = balance ;
             return new ResponseEntity<Long>(balance, HttpStatus.OK);
         } catch (JWTVerificationException e) {
             LOGGER.error("Failed to retrieve account balance: not authorized");
+			System.out.println("Testing the PR");
             return new ResponseEntity<>("not authorized",
                 HttpStatus.UNAUTHORIZED);
         } catch (ExecutionException | UncheckedExecutionException e) {
