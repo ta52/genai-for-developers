@@ -111,6 +111,7 @@ public final class LedgerReader {
                         // remote database out of sync
                         // suspend processing transactions to reset service
                         alive = false;
+						System.out.println(">>>>>");
                         LOGGER.error("Remote transaction id out of sync");
                     }
                 }
