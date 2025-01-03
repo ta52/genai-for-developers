@@ -138,190 +138,140 @@ def code(context, output):
             {}
 
             '''
-    # Output Format Substitution
+       # Output Format Substitution
     output_format = {
-    'json': '''Provide your feedback in a structured JSON array with each element containing the following fields:
+        'markdown': '''Structure: Organize your findings by class and method names. This provides clear context for the issues and aids in refactoring.
 
-*   **method_name**: The name of the method where the issue is found.
+Tone: Frame your findings as constructive suggestions or open-ended questions. This encourages collaboration and avoids a purely critical tone. Examples:
+
+*   "Could we explore an alternative algorithm here to potentially improve performance?"
+*   "Would refactoring this logic into smaller functions enhance readability and maintainability?"
+
+Specificity: Provide detailed explanations for each issue. This helps the original developer understand the reasoning and implement effective solutions.
+
+Prioritization: If possible, indicate the severity or potential impact of each issue (e.g., critical, high, medium, low). This helps prioritize fixes.
+
+No Issues: If your review uncovers no significant areas for improvement, state "No major issues found. The code appears well-structured and adheres to good practices."
+
+Prioritize your findings based on their severity or potential impact (e.g., critical, high, medium, low). If no major issues are found, state: "No major issues found. The code appears well-structured and adheres to good practices." Frame your feedback as constructive suggestions or open-ended questions to foster collaboration and avoid a purely critical tone. Example: "Could we explore an alternative algorithm here to potentially improve performance?"''',
+
+        'json': '''Provide your feedback in a structured JSON array that follows common standards, with each element containing the following fields:
+
+*   **class_name** (optional): The name of the class where the issue is found.
+*   **method_name** (optional): The name of the method where the issue is found.
 *   **issue_type**: A brief description of the issue type (e.g., "Performance Bottleneck," "Security Vulnerability").
 *   **description**: A detailed explanation of the issue, including its potential impact and suggested solutions.
-*   **severity**: Indicate the severity or potential impact of the issue (e.g., "critical", "high", "medium", "low").
-*   **recommendation**: Specific suggestions for improvement.
+*   **severity**: (optional) Indicate the severity or potential impact of the issue (e.g., "critical", "high", "medium", "low").
 
-### Summary ###
-The overall summary of the code review findings:
-- **Summary**: Provide an overall impression of the code review.
-- **Decision**: Indicate "Approved" if there are no critical or high-severity issues, or "Rejected" if high-severity issues are present.
+Provide an overview or overall impression entry for the code as the first entry.''',
+        'table': '''Provide your feedback in a structured JSON array that follows common standards, with each element containing the following fields:
 
-### Example JSON Output ###
+*   **class_name** (optional): The name of the class where the issue is found.
+*   **method_name** (optional): The name of the method where the issue is found.
+*   **issue_type**: A brief description of the issue type (e.g., "Performance Bottleneck," "Security Vulnerability").
+*   **description**: A detailed explanation of the issue, including its potential impact and suggested solutions.
+*   **severity**: (optional) Indicate the severity or potential impact of the issue (e.g., "critical", "high", "medium", "low").
+
+Provide an overview or overall impression entry for the code as the first entry.'''
+    }[output]  
+
+    qry = get_prompt('review_query') or f'''
+### Instruction ###
+You are a senior Java developer and architect specializing in HCL Commerce V9.1 development and best practices. Your task is to perform a **comprehensive code review** of the provided Java code snippet.
+
+### Key Areas of Review ###
+1. **Naming Conventions**:
+   - Ensure adherence to WCS (WebSphere Commerce Suite) package hierarchy conventions.
+   - Validate that extensions to WebSphere Commerce follow the naming patterns (e.g., `com.brands.tb.commerce.order.commands`).
+   - Extended classes should be named using `TB<<OOBName>>.java` (e.g., `TBLoginCmdImpl.java`).
+   - New controller commands should use a **noun-verb** naming combination (e.g., `CommentCreateCmdImpl`).
+   - Task commands should follow **verb-noun** naming convention.
+   - Interfaces and implementing classes should use `Cmd` and `CmdImpl` as suffixes.
+
+2. **Variable and Object Declaration**:
+   - Local variables must be initialized where they are declared.
+   - Object references should be initialized to `null`.
+   - Encourage the use of `Optional` for handling nullable values where appropriate.
+
+3. **Documentation**:
+   - Ensure meaningful Javadoc comments for classes, interfaces, and methods.
+   - Comments should add clarity and not merely restate the code.
+
+4. **Standards and Guidelines**:
+   - Avoid non-reachable or "dead" code.
+   - Avoid deprecated APIs; prefer modern APIs.
+   - Remove `System.out.println` statements and use logging frameworks.
+   - Use Java 8 features (e.g., `Map.forEach((k, v) -> ...)` instead of traditional loops).
+
+5. **Business Logic and Method Structure**:
+   - Declare commonly used request properties as class variables and set them in `setRequestProperties()`.
+   - Validation of mandatory parameters should occur in `validateParameters()` rather than `performExecute()`.
+   - `performExecute()` should contain only business logic.
+
+6. **Data Access**:
+   - SQL statements should be predefined, not dynamically constructed.
+   - Use **Prepared Statements** with parameters to prevent SQL injection.
+   - Avoid `LIKE` operators on non-indexed columns in `WHERE` clauses.
+   - Implement caching mechanisms to avoid unnecessary database calls.
+   - Avoid using `TransactionManager.commit` directly unless necessary; ensure a `TransactionManager.begin` follows after every `commit`.
+   - Ensure `BufferedReader` is used for reading input streams to avoid performance issues.
+
+7. **Exception, Trace, and Logging**:
+   - Use `ECTrace` for conditional logging and ensure minimal overhead when logging is disabled.
+   - Include entry and exit logs for methods when tracing is enabled.
+   - Avoid using `e.printStackTrace()`; instead, throw and log proper exceptions with context.
+   - Use `SEVERE` for non-recoverable errors, `WARN` for recoverable errors, and `INFO` for informational messages.
+
+8. **Security**:
+   - Prevent SQL injection by always using **prepared statements**.
+   - Validate external input to prevent injection attacks (e.g., validate emails using regex patterns).
+
+9. **Java API Best Practices**:
+   - Use `try-with-resources` for automatic resource management.
+   - Prefer `java.time.*` over `java.util.Date` and `java.util.Calendar` for thread-safe and efficient date-time handling.
+
+10. **Concurrency**:
+   - Minimize the use of `synchronized` blocks and use `ReentrantLock` for better control.
+   - Use `ConcurrentHashMap` for concurrent read/write operations rather than synchronizing the entire map.
+
+11. **Collections and Data Structures**:
+   - Choose collections based on usage patterns (e.g., `ArrayList` for read-heavy operations, `LinkedList` for frequent insertions/deletions).
+
+12. **Clean Code Practices**:
+   - Use lambdas only for concise operations.
+   - Avoid complex operations inside lambdas for better readability and performance.
+
+13. **Bug Detection and Validation**:
+   - Validate for common Java bugs such as:
+     - **Type Casting Errors**: Ensure that type conversions do not lead to data loss or `ClassCastException`.
+     - **Null Pointer Dereferences**: Identify potential places where `NullPointerException` may occur.
+     - **Unchecked Exceptions**: Ensure exceptions are handled or properly documented.
+     - **Arithmetic Errors**: Check for division by zero or overflow issues.
+     - **Resource Leaks**: Verify that all resources (e.g., streams, database connections) are closed properly using `try-with-resources`.
+     - **Thread Safety**: Ensure that concurrent methods do not lead to race conditions or deadlocks.
+     - **Deprecated API Usage**: Avoid the use of deprecated methods that may break in future versions.
+
+### Output Format ###
+Provide your feedback in the following JSON format:
+
 ```json
 [
     {
-        "method_name": "getBalance",
-        "issue_type": "Type Mismatch",
-        "description": "Long value assigned to int, possible overflow.",
-        "severity": "high",
-        "recommendation": "Use `.intValue()` with range checks."
+        "method_name": "<name_of_the_method>",
+        "issue_type": "<description_of_the_issue_type>",
+        "description": "<detailed_explanation_of_the_issue>",
+        "severity": "<critical|high|medium|low>",
+        "recommendation": "<specific_suggestion_for_improvement>"
     },
     {
-        "summary": "The code has several high-severity issues related to type mismatches and inefficient error handling.",
-        "decision": "Rejected"
+        "summary": "<overall_summary_of_the_code_review_findings>",
+        "decision": "<Approved|Rejected>"
     }
 ]
 ```
 
-Provide detailed findings followed by a summary and decision in the JSON format only.'''
-}
- 
-
-    qry = get_prompt('review_query') or f'''
-            ### Instruction ###
-            You are a senior software engineer and architect with over 20 years of experience, specializing in the language of the provided code snippet and adhering to clean code principles. You are meticulous, detail-oriented, and possess a deep understanding of software design and best practices.
-
-            Your task is to perform a comprehensive code review of the provided code snippet. Evaluate the code with a focus on the following key areas:
-            
-### Instruction ###
-You are a senior Java developer and architect specializing in HCL Commerce V9.1 development and best practices. Your task is to perform a comprehensive code review of the provided Java code snippet, with a focus on identifying issues specific to HCL Commerce and Java development, such as incorrect API usage, inefficiencies, and common bugs.
-
-### Key Areas of Review ###
-1. **HCL Commerce Best Practices**:
-   - Ensure adherence to HCL Commerce coding guidelines.
-   - Validate the use of HCL Commerce-specific APIs and frameworks (e.g., REST services, DataBeans).
-   - Identify any anti-patterns or misuse of HCL Commerce features.
-
-2. **Correctness**:
-   - Check for syntax errors, type mismatches, and invalid type casting.
-   - Ensure that all variables and methods are correctly defined and used.
-
-3. **Efficiency**:
-   - Identify inefficient SQL queries, redundant operations, and suboptimal data structures.
-   - Look for potential memory leaks or resource management issues (e.g., unclosed database connections).
-
-4. **Concurrency and Thread Safety**:
-   - Ensure that shared resources are properly synchronized.
-   - Identify potential deadlocks, race conditions, or misuse of thread pools.
-
-5. **Error Handling**:
-   - Ensure robust error handling with meaningful error messages.
-   - Check for proper exception logging and handling (e.g., catching `SQLException` but not logging it).
-
-6. **Security**:
-   - Check for SQL injection vulnerabilities.
-   - Ensure secure handling of sensitive data (e.g., customer PII, payment information).
-   - Validate proper input sanitization and authentication mechanisms.
-
-7. **Maintainability**:
-   - Assess code readability, modularity, and compliance with Java coding standards.
-   - Suggest improvements for better modularization and reusability.
-
-8. **Deprecated APIs**:
-   - Identify any usage of deprecated Java or HCL Commerce APIs.
-   - Recommend modern alternatives.
-
-            ### Output Format ###
-            {output_format}
-            
-            ### Example Dialogue ###
-            <query> First questions are to detect violations of coding style guidelines and conventions. Identify inconsistent formatting, naming conventions, indentation, comment placement, and other style-related issues. Provide suggestions or automatically fix the detected violations to maintain a consistent and readable codebase if this is a problem.
-                    import "fmt"
-                    
-                    func main() {{
-                        name := "Alice"
-                        greeting := fmt.Sprintf("Hello, %s!", name)
-                        fmt.Println(greeting)
-                    }}
-                    
-                    
-                    <response> [
-                        {{
-                            "question": "Indentation",
-                            "answer": "yes",
-                            "description": "Code is consistently indented with spaces (as recommended by Effective Go)"
-                        }},
-                        {{
-                            "question": "Variable Naming",
-                            "answer": "yes",
-                            "description": "Variables ("name", "greeting") use camelCase as recommended"
-                        }},
-                        {{
-                            "question": "Line Length",
-                            "answer": "yes",
-                            "description": "Lines are within reasonable limits" 
-                        }},
-                        {{
-                            "question": "Package Comments", 
-                            "answer": "n/a",
-                            "description": "This code snippet is too small for a package-level comment"
-                        }}
-                    ]
-                    
-                    
-                    <query> Identify common issues such as code smells, anti-patterns, potential bugs, performance bottlenecks, and security vulnerabilities. Offer actionable recommendations to address these issues and improve the overall quality of the code.
-                    
-                    "package main
-                    
-                    import (
-                        "fmt"
-                        "math/rand"
-                        "time"
-                    )
-                    
-                    // Global variable, potentially unnecessary 
-                    var globalCounter int = 0 
-                    
-                    func main() {{
-                        items := []string{{"apple", "banana", "orange"}}
-                    
-                        // Very inefficient loop with nested loop for a simple search
-                        for _, item := range items {{
-                            for _, search := range items {{
-                                if item == search {{
-                                    fmt.Println("Found:", item)
-                                }}
-                            }}
-                        }}
-                    
-                        // Sleep without clear reason, potential performance bottleneck
-                        time.Sleep(5 * time.Second) 
-                    
-                        calculateAndPrint(10)
-                    }}
-                    
-                    // Potential divide-by-zero risk
-                    func calculateAndPrint(input int) {{
-                        result := 100 / input 
-                        fmt.Println(result)
-                    }}"
-                    
-                    <response> [
-                        {{
-                            "question": "Global Variables",
-                            "answer": "no",
-                            "description": "Potential issue: Unnecessary use of the global variable 'globalCounter'. Consider passing values as arguments for better encapsulation." 
-                        }},
-                        {{
-                            "question": "Algorithm Efficiency",
-                            "answer": "no",
-                            "description": "Highly inefficient search algorithm with an O(n^2) complexity. Consider using a map or a linear search for better performance, especially for larger datasets."
-                        }},
-                        {{
-                            "question": "Performance Bottlenecks",
-                            "answer": "no",
-                            "description": "'time.Sleep' without justification introduces a potential performance slowdown. Remove it if the delay is unnecessary or provide context for its use."
-                        }},
-                        {{
-                            "question": "Potential Bugs",
-                            "answer": "no",
-                            "description": "'calculateAndPrint' function has a divide-by-zero risk. Implement a check to prevent division by zero and handle the error appropriately."
-                        }},
-                        {{ 
-                            "question": "Code Readability",
-                            "answer": "no",
-                            "description": "Lack of comments hinders maintainability. Add comments to explain the purpose of functions and blocks of code."
-                        }} 
-                    ]
-
-            '''
+Ensure you highlight both coding and security issues with actionable recommendations and a final decision based on issue severity.
+'''
     # Load files as text into the source variable
     source = source.format(format_files_as_string(context))
 
