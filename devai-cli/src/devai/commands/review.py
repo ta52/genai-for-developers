@@ -139,38 +139,30 @@ def code(context, output):
 
             '''
     # Output Format Substitution
-    output_format = {
+output_format = {
     'json': '''Provide your feedback in a structured JSON array with each element containing the following fields:
 
-*   **method_name**: The name of the method where the issue is found.
-*   **issue_type**: A brief description of the issue type (e.g., "Performance Bottleneck," "Security Vulnerability").
-*   **description**: A detailed explanation of the issue, including its potential impact and suggested solutions.
-*   **severity**: Indicate the severity or potential impact of the issue (e.g., "critical", "high", "medium", "low").
-*   **recommendation**: Specific suggestions for improvement.
+*   "method_name": The name of the method where the issue is found.
+*   "issue_type": A brief description of the issue type (e.g., "Performance Bottleneck," "Security Vulnerability").
+*   "description": A detailed explanation of the issue, including its potential impact and suggested solutions.
+*   "severity": Indicate the severity or potential impact of the issue (e.g., "critical", "high", "medium", "low").
+*   "recommendation": Specific suggestions for improvement.
 
-### Summary ###
-The overall summary of the code review findings:
-- **Summary**: Provide an overall impression of the code review.
-- **Decision**: Indicate "Approved" if there are no critical or high-severity issues, or "Rejected" if high-severity issues are present.
-
-### Example JSON Output ###
-```json
+Example:
 [
-    {
-        "method_name": "getBalance",
-        "issue_type": "Type Mismatch",
-        "description": "Long value assigned to int, possible overflow.",
-        "severity": "high",
-        "recommendation": "Use `.intValue()` with range checks."
-    },
-    {
-        "Summary": "The code has several high-severity issues related to type mismatches and inefficient error handling.",
-        "Decision": "Rejected"
-    }
+  {
+    "method_name": "getBalance",
+    "issue_type": "Type Mismatch",
+    "description": "Long value assigned to int, possible overflow.",
+    "severity": "high",
+    "recommendation": "Use `.intValue()` with range checks."
+  },
+  {
+    "summary": "The code has several high-severity issues related to type mismatches and inefficient error handling.",
+    "decision": "Rejected"
+  }
 ]
-```
-
-Provide detailed findings followed by a summary and decision in the JSON format only.'''
+'''
 }
  
 
@@ -249,7 +241,7 @@ You are a senior Java developer and architect specializing in HCL Commerce V9.1 
      - **Resource Leaks**: Verify that all resources (e.g., streams, database connections) are closed properly using `try-with-resources`.
      - **Thread Safety**: Ensure that concurrent methods do not lead to race conditions or deadlocks.
      - **Deprecated API Usage**: Avoid the use of deprecated methods that may break in future versions.
-     
+
 ### Output Format ###
 Provide your feedback in the following JSON format:
 
