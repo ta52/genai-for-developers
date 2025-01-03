@@ -139,7 +139,7 @@ def code(context, output):
 
             '''
     # Output Format Substitution
-    output_format = output_format = {
+    output_format = {
     'json': '''Provide your feedback in a structured JSON array with each element containing the following fields:
 
 *   **method_name**: The name of the method where the issue is found.
@@ -149,10 +149,11 @@ def code(context, output):
 *   **recommendation**: Specific suggestions for improvement.
 
 ### Summary ###
-- **Summary**: Provide an overall impression of the code review findings.
-- **Decision**: Indicate "Approved" if there are no critical or high-severity issues, or "Rejected" if there are high-severity issues.
+The overall summary of the code review findings:
+- **Summary**: Provide an overall impression of the code review.
+- **Decision**: Indicate "Approved" if there are no critical or high-severity issues, or "Rejected" if high-severity issues are present.
 
-Example JSON Output:
+### Example JSON Output ###
 ```json
 [
     {
@@ -169,9 +170,9 @@ Example JSON Output:
 ]
 ```
 
-Provide a detailed analysis of any issues identified, followed by an overall summary and decision.
-'''
-}[output] 
+Provide detailed findings followed by a summary and decision in the JSON format only.'''
+}
+ 
 
     qry = get_prompt('review_query') or f'''
             ### Instruction ###
